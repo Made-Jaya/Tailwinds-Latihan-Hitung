@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Penjumlahan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        #game-container {
+            display: none;
+            margin-top: 20px;
+        }
+        #result {
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+        #question {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        #answer {
+            font-size: 1.5em;
+            padding: 10px;
+            width: 100px;
+            text-align: center;
+            border: 2px solid #30a6e5;
+            border-radius: 5px;
+        }
+        #submit-button {
+            font-size: 1.5em;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(to right, #2981da 0%, #4d82f3 99%, #2de2e5 100%);
+            cursor: pointer;
+            color: white;
+        }
+        #submit-button:hover {
+            background: linear-gradient(to right, #2981da 0%, #4d82f3 99%, #2de2e5 100%);
+        }
+        #score-table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        #score-table th, #score-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        #score-table th {
+            background-color: #f2f2f2;
+        }
+        #start-button {
+                font-size: 1.5em;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                background: linear-gradient(to right, #2981da 0%, #4d82f3 99%, #2de2e5 100%);
+                cursor: pointer;
+                color: white;
+            }
+        
+    </style>
+</head>
+<body>
+    <h1>Game Penjumlahan</h1>
+    <button id="start-button" onclick="startGame()">Mulai Permainan</button>
+    <div id="game-container">
+        <div id="timer">Waktu: <span id="time">90</span> detik</div>
+        <div id="question"></div>
+        <input type="number" id="answer" placeholder="Jawaban Anda">
+        <button id="submit-button" onclick="submitAnswer()">Jawab</button>
+        <div id="result"></div>
+        <div id="score">
+            Benar: <span id="correct">0</span> | Salah: <span id="incorrect">0</span>
+        </div>
+    </div>
+    <div id="highscore"></div>
+    <table id="score-table">
+        <thead>
+            <tr>
+                <th>Tanggal dan Waktu</th>
+                <th>Benar</th>
+                <th>Salah</th>
+            </tr>
+        </thead>
+        <tbody id="score-table-body">
+        </tbody>
+    </table>
+
+    <script>
+        let timeLeft = 90;
+        let timerInterval;
+        let correctAnswer;
+        let correctCount = 0;
+        let incorrectCount = 0;
+
+        function startGame() {
+            document.getElementById("start-button").style.display = 'none';
+            document.getElementById("game-container").style.display = 'block';
+            timeLeft = 90;
+            correctCount = 0;
+            incorrectCount = 0;
+            document.getElementById("time").innerText = timeLeft;
+            document.getElementById("correct").innerText = correctCount;
+            document.getElementById("incorrect").innerText = incorrectCount;
+            generateQuestion();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            document.getElementById("time").innerText = timeLeft;
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function generateQuestion() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            correctAnswer = num1 + num2;
+            document.getElementById("question").innerText = `${num1} + ${num2} = ?`;
+            document.getElementById("answer").value = '';
+            document.getElementById("result").innerText = '';
+        }
+
+        function submitAnswer() {
+            const playerAnswer = parseInt(document.getElementById("answer").value);
+            if (playerAnswer === correctAnswer) {
+                document.getElementById("result").innerText = 'Benar!';
+                correctCount++;
+            } else {
+                document.getElementById("result").innerText = 'Salah, coba lagi!';
+                incorrectCount++;
+            }
+            document.getElementById("correct").innerText = correctCount;
+            document.getElementById("incorrect").innerText = incorrectCount;
+            generateQuestion();
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            document.getElementById("question").innerText = '';
+            document.getElementById("result").innerText = `Waktu habis! Skor Anda: Benar: ${correctCount}, Salah: ${incorrectCount}`;
+            document.getElementById("game-container").style.display = 'none';
+            document.getElementById("start-button").style.display = 'block';
+            document.getElementById("start-button").innerText = 'Main Lagi';
+            saveScore(correctCount, incorrectCount);
+        }
+
+        function saveScore(correct, incorrect) {
+            const currentDateTime = new Date().toLocaleString();
+            const scoreEntry = {
+                dateTime: currentDateTime,
+                correct: correct,
+                incorrect: incorrect
+            };
+            let scores = JSON.parse(localStorage.getItem('scores')) || [];
+            scores.push(scoreEntry);
+            localStorage.setItem('scores', JSON.stringify(scores));
+            displayScores();
+        }
+
+        function displayScores() {
+            const scores = JSON.parse(localStorage.getItem('scores')) || [];
+            const scoreTableBody = document.getElementById('score-table-body');
+            scoreTableBody.innerHTML = '';
+            scores.forEach(score => {
+                const row = document.createElement('tr');
+                const dateTimeCell = document.createElement('td');
+                const correctCell = document.createElement('td');
+                const incorrectCell = document.createElement('td');
+                dateTimeCell.textContent = score.dateTime;
+                correctCell.textContent = score.correct;
+                incorrectCell.textContent = score.incorrect;
+                row.appendChild(dateTimeCell);
+                row.appendChild(correctCell);
+                row.appendChild(incorrectCell);
+                scoreTableBody.appendChild(row);
+            });
+        }
+
+        // Load scores and highscore when the page loads
+        document.addEventListener('DOMContentLoaded', (event) => {
+            displayScores();
+            document.getElementById("answer").addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    submitAnswer();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
